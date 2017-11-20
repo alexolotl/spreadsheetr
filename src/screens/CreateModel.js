@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, ScrollView, Button, Picker, TouchableHighlight, Dimensions } from 'react-native';
+import { Text, View, ScrollView, Button, Picker, TouchableHighlight, Dimensions, TextInput } from 'react-native';
 import styles from '../styles'
 
 import SelectFormatRow from '../components/SelectFormatRow'
@@ -12,30 +12,30 @@ export default class CreateModelScreen extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      dataTypes: [{format: 'text', value: 'Column 1'}],
-      counter: 2 // used to name new columns without repetition, even if you delete one
+      spreadsheet: [[{value: null, type: null}]],
+      row: 0,
+      col: 0
     }
   }
-  appendRow = () => { // causing problems
-    this.setState({counter: this.state.counter + 1}) // increase column naming index to avoid duplicates
-    let newArray = this.state.dataTypes.slice();
-    newArray.push({format: 'text', value: `Column ${(this.state.counter).toString()}`});
-    this.setState({dataTypes: newArray})
+
+  setValue = (value, type) => {
+    let spreadsheetCopy = this.state.spreadsheet
+    let obj = {value: value, type: type}
+    spreadsheetCopy[this.state.row, this.state.col] = obj
+    this.setState({
+      spreadsheet: spreadsheetCopy
+    })
   }
-  deleteRow = (index) => {
-    let newArray = this.state.dataTypes.slice();
-    newArray.splice(index, 1);
-    this.setState({dataTypes: newArray})
+
+  getValue = () => {
+    return this.state.spreadsheet[this.state.row][this.state.col] ?
+      this.state.spreadsheet[this.state.row][this.state.col].value
+      :
+      null
   }
-  setFormat = (format, i) => {
-    let newArray = this.state.dataTypes.slice();
-    newArray[i].format = format;
-    this.setState({dataTypes: newArray})
-  }
-  setValue = (value, i) => {
-    let newArray = this.state.dataTypes.slice();
-    newArray[i].value = value;
-    this.setState({dataTypes: newArray})
+
+  newColumn = () => {
+
   }
   render() {
     const {navigate} = this.props.navigation;
@@ -43,36 +43,45 @@ export default class CreateModelScreen extends React.Component {
     return (
       <View style={[styles.flexCol, styles.fullScreen]}>
         <ScrollView style={[styles.fullScreen]}>
-          {
-            this.state.dataTypes.map((type, i) => {
-              return (
-                <SelectFormatRow
-                  key={i}
-                  index={i}
-                  format={this.state.dataTypes[i].format}
-                  value={this.state.dataTypes[i].value}
-                  onSetFormat={this.setFormat}
-                  onSetValue={this.setValue}
-                  onDelete={this.deleteRow}
-                />
-              )
-            })
-          }
-          <Button
-            title="Add Column"
-            onPress={this.appendRow}
-          />
+          <View style={[styles.flexCol, {width: '100%'}]}>
+            <Text>Column {this.state.col + 1}</Text>
+            <TextInput
+              style={{height: 40, width: 200, borderColor: 'gray', borderWidth: 1}}
+              onChangeText={(text) => {this.setValue(text, 'TEXT')}}
+              value={this.getValue()}
+              selectTextOnFocus={true}
+            />
+          </View>
+
+          <View>{this.state.spreadsheet.map((val, i) => {
+            return (
+                <Text key={i} style={{color: this.state.col == i ? 'blue' : 'black'}}>{val.type}: {val.value}</Text>
+            )
+          })}</View>
         </ScrollView>
 
-        <View style={[styles.flexRow]}>
+        <View style={[styles.flexCol]}>
             <TouchableHighlight
-              onPress={() => navigate('CreateRecord', {model: this.state.dataTypes.slice()})}
-              style={[styles.bigButton, styles.flexRow]}
+              onPress={() => {this.setState({col: this.state.col + 1})}}
             >
               <Text style={[styles.bigButtonText]}>
-                New Record
+                Next Column
               </Text>
           </TouchableHighlight>
+          <TouchableHighlight
+            onPress={() => {this.setState({col: Math.max(this.state.col - 1, 0)})}}
+          >
+            <Text style={[styles.bigButtonText]}>
+              Prev Column
+            </Text>
+        </TouchableHighlight>
+        <TouchableHighlight
+          onPress={() => {this.setState({row: this.state.row + 1, col: 0})}}
+        >
+          <Text style={[styles.bigButtonText]}>
+            New Row Entry
+          </Text>
+      </TouchableHighlight>
         </View>
       </View>
     );
