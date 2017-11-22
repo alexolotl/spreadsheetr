@@ -68,6 +68,12 @@ export default StyleSheet.create({
 
   textCenter: {
     textAlign: 'center'
+  },
+
+  navButton: {
+    padding: 5,
+    backgroundColor: 'lightgrey',
+    margin: 5
   }
 
 });
