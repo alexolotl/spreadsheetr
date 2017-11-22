@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View, ScrollView, Button, Picker, TouchableHighlight, Dimensions, TextInput, ImagePickerIOS, Image, TouchableOpacity } from 'react-native';
 import styles from '../styles'
 
-// import Camera from 'react-native-camera';
+import Camera from 'react-native-camera';
 
 export default class CreateModelScreen extends React.Component {
   static navigationOptions = {
@@ -130,7 +130,12 @@ export default class CreateModelScreen extends React.Component {
 
   takePicture = () => {
      this.camera.capture()
-       .then((data) => console.log(data))
+       .then((data) => {
+         console.log(data)
+         // contains mediaUri and path, whats the difference? TODO
+         this.setState({ imgTest: data.mediaUri });
+         this.setValue(data.mediaUri, 'IMAGE')
+       })
        .catch(err => console.error(err));
    }
 
@@ -167,14 +172,13 @@ export default class CreateModelScreen extends React.Component {
                 </Text>
               </TouchableHighlight>
               {
-               //  <Camera
-               //     ref={(cam) => {
-               //       this.camera = cam;
-               //     }}
-               //     style={styles.preview}
-               //     aspect={Camera.constants.Aspect.fill}>
-               //     <Text style={styles.capture} onPress={this.takePicture}>[CAPTURE]</Text>
-               // </Camera>
+                <Camera
+                   ref={(cam) => {
+                     this.camera = cam;
+                   }}
+                   aspect={Camera.constants.Aspect.fill}>
+                   <Text style={[styles.navButton]} onPress={this.takePicture}>CAPTURE WITH CAMERA</Text>
+               </Camera>
               }
 
             </View>
@@ -201,11 +205,11 @@ export default class CreateModelScreen extends React.Component {
     return (
       <View style={[styles.flexCol, styles.fullScreen, {width: '100%'}]}>
 
-        <View style={{flex: .33, width: '100%'}}>
+        <View style={{flex: .4, width: '100%'}}>
           {this.renderInputs()}
         </View>
 
-        <View style={{flex: .33, width: '100%'}}>
+        <View style={{flex: .3, width: '100%'}}>
           <ScrollView style={{borderColor: 'lightgrey', borderWidth: 1}}>
           {
             this.renderPreview()
@@ -213,7 +217,7 @@ export default class CreateModelScreen extends React.Component {
           </ScrollView>
         </View>
 
-        <View style={[styles.flexCol, {flex: .33, width: '100%'}]}>
+        <View style={[styles.flexCol, {flex: .3, width: '100%'}]}>
           <TouchableHighlight
             style={[styles.navButton]}
               onPress={() => {
