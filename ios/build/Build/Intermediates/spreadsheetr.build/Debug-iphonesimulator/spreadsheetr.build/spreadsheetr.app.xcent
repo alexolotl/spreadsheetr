@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
 	<key>application-identifier</key>
-	<string>FAKETEAMID.org.reactjs.native.example.spreadsheetr</string>
+	<string>8LA9V6435X.org.reactjs.native.example.spreadsheetr</string>
 	<key>keychain-access-groups</key>
 	<array>
-		<string>FAKETEAMID.org.reactjs.native.example.spreadsheetr</string>
+		<string>8LA9V6435X.org.reactjs.native.example.spreadsheetr</string>
 	</array>
 </dict>
 </plist>

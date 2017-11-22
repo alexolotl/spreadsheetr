@@ -2,6 +2,8 @@ import React from 'react';
 import { Text, View, ScrollView, Button, Picker, TouchableHighlight, Dimensions, TextInput, ImagePickerIOS, Image, TouchableOpacity } from 'react-native';
 import styles from '../styles'
 
+// import Camera from 'react-native-camera';
+
 export default class CreateModelScreen extends React.Component {
   static navigationOptions = {
     title: 'Enter your Data',
@@ -126,6 +128,12 @@ export default class CreateModelScreen extends React.Component {
     })
   }
 
+  takePicture = () => {
+     this.camera.capture()
+       .then((data) => console.log(data))
+       .catch(err => console.error(err));
+   }
+
   renderInputs() {
     return (
       <View style={[{width: '100%', padding: 15}, styles.flexCol]}>
@@ -150,14 +158,25 @@ export default class CreateModelScreen extends React.Component {
           this.state.type == 'IMAGE'
             &&
             <View>
-            <TouchableHighlight
-                style={[styles.navButton], {height: 40, marginVertical: 20}}
-                onPress={this.pickImage}
-              >
-              <Text style={[styles.bigButtonText, {backgroundColor: '#aaffaa', padding: 20}]}>
-                UPLOAD IMAGE
-              </Text>
-            </TouchableHighlight>
+              <TouchableHighlight
+                  style={[styles.navButton], {height: 40, marginVertical: 20}}
+                  onPress={this.pickImage}
+                >
+                <Text style={[styles.bigButtonText, {backgroundColor: '#aaffaa', padding: 20}]}>
+                  UPLOAD NEW IMAGE
+                </Text>
+              </TouchableHighlight>
+              {
+               //  <Camera
+               //     ref={(cam) => {
+               //       this.camera = cam;
+               //     }}
+               //     style={styles.preview}
+               //     aspect={Camera.constants.Aspect.fill}>
+               //     <Text style={styles.capture} onPress={this.takePicture}>[CAPTURE]</Text>
+               // </Camera>
+              }
+
             </View>
           }
           {
