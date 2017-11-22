@@ -10,9 +10,6 @@ export default class HomeScreen extends React.Component {
     const {navigate} = this.props.navigation;
     return (
       <View style={[styles.flexCol, styles.fullScreen]}>
-        <Text style={[styles.h1, styles.textCenter]}>
-          Hello
-        </Text>
         <Button
             onPress={() => navigate('CreateModel')}
             title="Model Your Data"

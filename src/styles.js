@@ -19,7 +19,7 @@ export default StyleSheet.create({
   flexRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
+    justifyContent: 'flex-start',
     flexWrap: 'nowrap',
     width: '100%'
   },
@@ -27,7 +27,7 @@ export default StyleSheet.create({
   flexCol: {
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     flexWrap: 'nowrap',
     width: '100%'
   },
@@ -71,9 +71,9 @@ export default StyleSheet.create({
   },
 
   navButton: {
-    padding: 5,
-    backgroundColor: 'lightgrey',
-    margin: 5
+    margin: 5,
+    padding:5,
+    backgroundColor: '#99edff',
   }
 
 });
