@@ -10,9 +10,7 @@ import {
   TextInput,
   ImagePickerIOS,
   Image,
-  TouchableOpacity,
-  NativeModules } from 'react-native'; // NativeModules includes a custom Objective C file that converts image into base64data
-import styles from '../styles'
+  TouchableOpacity } from 'react-native';
 
 import Camera from 'react-native-camera';
 
