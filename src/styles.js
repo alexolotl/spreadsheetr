@@ -43,9 +43,9 @@ export default StyleSheet.create({
 
   bigButton: {
       backgroundColor: '#dddddd',
-      height: 50,
+      height: 40,
       width: '80%',
-      margin: 20,
+      margin: 10,
   },
 
   smallButton: {
@@ -57,13 +57,17 @@ export default StyleSheet.create({
   },
 
   bigButtonText: {
-    fontSize: 20,
-    textAlign: 'center'
+    fontSize: 18,
+    textAlign: 'center',
+    width: '100%',
+    fontFamily: 'Avenir-Medium',
+    height: '100%'
   },
 
   h1: {
-    fontSize: 36,
-    fontFamily: 'Helvetica'
+    fontSize: 18,
+    color: 'white',
+    fontFamily: 'Avenir-Medium'
   },
 
   textCenter: {
@@ -71,10 +75,22 @@ export default StyleSheet.create({
   },
 
   navButton: {
-    margin: 5,
-    padding:5,
+    paddingHorizontal:5,
     borderColor: 'black',
     borderWidth: 1
+  },
+
+  camButton: {
+    marginVertical: 5,
+    width: '100%',
+    height: 30,
+    backgroundColor: 'transparent'
+  },
+
+  typeButton: {
+    padding: 10,
+    borderColor: 'black',
+    borderWidth: 1,
   },
 
   preview: {

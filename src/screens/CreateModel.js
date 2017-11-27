@@ -1,5 +1,17 @@
 import React from 'react';
-import { Text, View, ScrollView, Button, Picker, TouchableHighlight, Dimensions, TextInput, ImagePickerIOS, Image, TouchableOpacity } from 'react-native';
+import {
+  Text,
+  View,
+  ScrollView,
+  Button,
+  Picker,
+  TouchableHighlight,
+  Dimensions,
+  TextInput,
+  ImagePickerIOS,
+  Image,
+  TouchableOpacity,
+  NativeModules } from 'react-native'; // NativeModules includes a custom Objective C file that converts image into base64data
 import styles from '../styles'
 
 import Camera from 'react-native-camera';
@@ -32,6 +44,13 @@ export default class CreateModelScreen extends React.Component {
   getValue = () => {
     return this.state.spreadsheet[this.state.row][this.state.col] ?
       this.state.spreadsheet[this.state.row][this.state.col].value
+      :
+      null
+  }
+
+  getType = () => {
+    return this.state.spreadsheet[this.state.row][this.state.col] ?
+      this.state.spreadsheet[this.state.row][this.state.col].type
       :
       null
   }
@@ -90,7 +109,7 @@ export default class CreateModelScreen extends React.Component {
                   case 'IMAGE':
                     return (
                       <TouchableOpacity key={i*row.length + j} onPress={() => this.setState({row: i, col: j})} style={{width: 50, height: 50}}>
-                      <Image style={{width: 50, height: 50, borderColor: 'black', borderWidth: 1, backgroundColor: this.state.col == j && this.state.row == i ? 'black' : 'transparent'}}
+                      <Image style={{width: 50, height: 50, borderColor: 'black', borderWidth: 1, backgroundColor: this.state.col == j && this.state.row == i ? 'black' : 'white'}}
 
                             source={{ uri: this.state.spreadsheet[i][j].value }}
                       ></Image>
@@ -98,7 +117,7 @@ export default class CreateModelScreen extends React.Component {
                     )
                   default: // includes TEXT case
                     return (
-                      <Text onPress={() => this.setState({row: i, col: j})} style={{width: 50, height: 50, borderColor: 'black', borderWidth: 1, backgroundColor: this.state.col == j && this.state.row == i ? 'black' : 'transparent', color: this.state.col == j && this.state.row == i ? 'white' : 'black',}}
+                      <Text onPress={() => this.setState({row: i, col: j})} style={{width: 50, height: 50, borderColor: 'black', borderWidth: 1, backgroundColor: this.state.col == j && this.state.row == i ? 'black' : 'white', color: this.state.col == j && this.state.row == i ? 'white' : 'black',}}
                             key={i*row.length + j}>{col.value || 'null'}</Text>
                     )
                 }
@@ -111,14 +130,6 @@ export default class CreateModelScreen extends React.Component {
     )
   }
 
-  pickImage = () => {
-    // openSelectDialog(config, successCallback, errorCallback);
-    ImagePickerIOS.openSelectDialog({}, imageUri => {
-      this.setState({ imgTest: imageUri });
-      this.setValue(imageUri, 'IMAGE')
-    }, error => console.error(error));
-  }
-
   setType = (type) => {
     // let spreadsheetCopy = this.state.spreadsheet
     // spreadsheetCopy[this.state.row][this.state.col].type = type
@@ -128,67 +139,115 @@ export default class CreateModelScreen extends React.Component {
     })
   }
 
+  pickImage = () => {
+    // openSelectDialog(config, successCallback, errorCallback);
+    ImagePickerIOS.openSelectDialog({}, imageUri => {
+      this.setState({ imgTest: imageUri });
+      this.setValue(imageUri, 'IMAGE')
+    }, error => console.error(error));
+  }
+
   takePicture = () => {
      this.camera.capture()
        .then((data) => {
-         console.log(data)
          // contains mediaUri and path, whats the difference? TODO
          this.setState({ imgTest: data.mediaUri });
-         this.setValue(data.mediaUri, 'IMAGE')
+         this.setValue(data.mediaUri, 'IMAGE');
+         this.convertImageToBase64(data.mediaUri);
        })
        .catch(err => console.error(err));
    }
 
+   saveSpreadsheet() {
+     var uri = null;
+
+     var photo = {
+        uri: uri,
+        type: 'image/jpeg',
+        name: 'photo' + this.state.row.toString() + '_' + this.state.col.toString() + '.jpg',
+      };
+
+      var body = new FormData();
+      body.append('authToken', 'secret');
+      body.append('photo', photo);
+      body.append('title', 'A beautiful photo!');
+
+      var xhr = new XMLHttpRequest();
+      // xhr.open('POST', serverURL);
+      // xhr.send(body);
+   }
+
+   submitSpreadsheet() {
+     this.saveSpreadsheet()
+     // emailSpreadsheet()
+   }
+
   renderInputs() {
+
+    const {navigate} = this.props.navigation;
     return (
       <View style={[{width: '100%', padding: 15}, styles.flexCol]}>
 
-        <Text style={{marginBottom: 10}}>Row {this.state.row + 1}, Column {this.state.col + 1}</Text>
-        <Text>---SELECT TYPE---</Text>
-        <View style={[styles.flexRow, {justifyContent: 'center'}]}>
+        <Text style={[styles.h1, {marginBottom: 10}]}>Row {this.state.row + 1}, Column {this.state.col + 1}</Text>
+        <View style={[styles.flexRow, {width: '100%', justifyContent: 'center'}]}>
           <TouchableHighlight
             onPress={() => {this.setType('TEXT')}}
-            style={[styles.navButton, {backgroundColor: this.state.type == 'TEXT' ? '#dabeff' : 'transparent'}]}
+            style={[styles.typeButton, {flex: 1, borderRightWidth: 0, borderBottomWidth: this.state.type == 'TEXT' ? 0 : 1}]}
           >
             <Text>TEXT</Text>
           </TouchableHighlight>
           <TouchableHighlight
             onPress={() => {this.setType('IMAGE')}}
-            style={[styles.navButton, {backgroundColor: this.state.type == 'IMAGE' ? '#dabeff' : 'transparent'}]}
+            style={[styles.typeButton, {flex: 1, borderBottomWidth: this.state.type == 'IMAGE' ? 0 : 1}]}
           >
-            <Text>IMAGE</Text>
+            <Text style={[styles.flexCenter]}>IMAGE</Text>
           </TouchableHighlight>
         </View>
         {
           this.state.type == 'IMAGE'
             &&
-            <View>
+            <View style={{width: '100%', borderWidth: 1, borderColor: 'black', borderTopWidth: 0, padding: 10}}>
               <TouchableHighlight
-                  style={[styles.navButton], {height: 40, marginVertical: 20}}
+                  style={[styles.camButton]}
                   onPress={this.pickImage}
                 >
-                <Text style={[styles.bigButtonText, {backgroundColor: '#aaffaa', padding: 20}]}>
-                  UPLOAD NEW IMAGE
+                <Text style={[styles.bigButtonText]}>
+                  Upload From Camera Roll
                 </Text>
               </TouchableHighlight>
-              {
+
                 <Camera
                    ref={(cam) => {
                      this.camera = cam;
                    }}
-                   aspect={Camera.constants.Aspect.fill}>
-                   <Text style={[styles.navButton]} onPress={this.takePicture}>CAPTURE WITH CAMERA</Text>
-               </Camera>
-              }
+                   aspect={Camera.constants.Aspect.fill}
+                   style={[styles.camButton, {backgroundColor: 'pink'}]}
+                >
+                   <Text onPress={this.takePicture} style={[styles.bigButtonText]}>
+                     Capture With Camera
+                   </Text>
+                </Camera>
+
+          {
+            this.getValue() && this.getType() == 'IMAGE' &&
+            <TouchableHighlight
+              style={[styles.camButton]}
+              onPress={() => navigate('PreviewImage', {model: this.getValue()})}
+            >
+              <Text style={[styles.bigButtonText]}>
+                Preview Image
+              </Text>
+            </TouchableHighlight>
+          }
 
             </View>
           }
           {
             this.state.type == 'TEXT' &&
-            <View style={{marginVertical: 20}}>
-              <Text>ENTER TEXT HERE:</Text>
+            <View style={{width: '100%', borderWidth: 1, borderColor: 'black', borderTopWidth: 0, padding: 10}}>
+              <Text style={[styles.h1]}>Enter Text:</Text>
               <TextInput
-                style={{height: 40, width: 200, borderColor: 'gray', borderWidth: 1}}
+                style={{height: 40, width: '100%', borderColor: 'gray', borderWidth: 1}}
                 onChangeText={(text) => {this.setValue(text, 'TEXT')}}
                 value={this.getValue()}
                 selectTextOnFocus={true}
@@ -203,21 +262,21 @@ export default class CreateModelScreen extends React.Component {
     const {navigate} = this.props.navigation;
     const {height, width} = Dimensions.get('window');
     return (
-      <View style={[styles.flexCol, styles.fullScreen, {width: '100%'}]}>
+      <View style={[styles.flexCol, styles.fullScreen, {width: '100%', backgroundColor: 'pink'}]}>
 
         <View style={{flex: .4, width: '100%'}}>
           {this.renderInputs()}
         </View>
 
         <View style={{flex: .3, width: '100%'}}>
-          <ScrollView style={{borderColor: 'lightgrey', borderWidth: 1}}>
+          <ScrollView style={{padding: 15}}>
           {
             this.renderPreview()
           }
           </ScrollView>
         </View>
 
-        <View style={[styles.flexCol, {flex: .3, width: '100%'}]}>
+        <View style={[styles.flexCol, {flex: .3, width: '100%', padding: 20}]}>
           <TouchableHighlight
             style={[styles.navButton]}
               onPress={() => {
@@ -225,7 +284,7 @@ export default class CreateModelScreen extends React.Component {
                 this.setState({type: this.state.spreadsheet[Math.max(this.state.col - 1, 0)][this.state.col].type || 'TEXT'})
               }}
             >
-              <Text style={[styles.bigButtonText]}>
+              <Text style={[styles.h1]}>
                 ^
               </Text>
           </TouchableHighlight>
@@ -237,7 +296,7 @@ export default class CreateModelScreen extends React.Component {
                   this.setState({type: this.state.spreadsheet[this.state.row][Math.max(this.state.col - 1, 0)].type || 'TEXT'})
                 }}
               >
-                <Text style={[styles.bigButtonText]}>
+                <Text style={[styles.h1]}>
                   {`<`}
                 </Text>
             </TouchableHighlight>
@@ -245,26 +304,26 @@ export default class CreateModelScreen extends React.Component {
             style={[styles.navButton]}
               onPress={this.nextCol}
             >
-              <Text style={[styles.bigButtonText]}>
+              <Text style={[styles.h1]}>
                 {`>`}
               </Text>
           </TouchableHighlight>
         </View>
 
               <TouchableHighlight
-              style={[styles.navButton]}
+                style={[styles.navButton]}
                 onPress={this.nextRow}
               >
-                <Text style={[styles.bigButtonText]}>
+                <Text style={[styles.h1]}>
                   v
                 </Text>
             </TouchableHighlight>
 
           <TouchableHighlight
-            style={[styles.navButton]}
+            style={{backgroundColor: 'white', padding: 10}}
             >
-              <Text style={[styles.bigButtonText]}>
-                E-MAIL SPREADSHEET
+              <Text style={{fontFamily: "Avenir-Medium", fontSize: 20, color: 'pink'}}>
+                E-Mail Spreadsheet
               </Text>
           </TouchableHighlight>
         </View>
