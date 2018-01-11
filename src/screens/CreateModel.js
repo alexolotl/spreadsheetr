@@ -9,8 +9,11 @@ import {
   Dimensions,
   TextInput,
   ImagePickerIOS,
+  NativeModules,
   Image,
   TouchableOpacity } from 'react-native';
+
+import styles from '../styles'
 
 import Camera from 'react-native-camera';
 
@@ -26,7 +29,7 @@ export default class CreateModelScreen extends React.Component {
                     [{value: null, type: null}, {value: null, type: null}]],
       row: 0,
       col: 0,
-      type: 'TEXT',
+      type: 'TEXT'
     }
   }
 
@@ -108,7 +111,6 @@ export default class CreateModelScreen extends React.Component {
                     return (
                       <TouchableOpacity key={i*row.length + j} onPress={() => this.setState({row: i, col: j})} style={{width: 50, height: 50}}>
                       <Image style={{width: 50, height: 50, borderColor: 'black', borderWidth: 1, backgroundColor: this.state.col == j && this.state.row == i ? 'black' : 'white'}}
-
                             source={{ uri: this.state.spreadsheet[i][j].value }}
                       ></Image>
                       </TouchableOpacity>
@@ -116,7 +118,7 @@ export default class CreateModelScreen extends React.Component {
                   default: // includes TEXT case
                     return (
                       <Text onPress={() => this.setState({row: i, col: j})} style={{width: 50, height: 50, borderColor: 'black', borderWidth: 1, backgroundColor: this.state.col == j && this.state.row == i ? 'black' : 'white', color: this.state.col == j && this.state.row == i ? 'white' : 'black',}}
-                            key={i*row.length + j}>{col.value || 'null'}</Text>
+                            key={i*row.length + j}>{col.value || `${i},${j}\n(null)`}</Text>
                     )
                 }
 
@@ -138,46 +140,54 @@ export default class CreateModelScreen extends React.Component {
   }
 
   pickImage = () => {
-    // openSelectDialog(config, successCallback, errorCallback);
     ImagePickerIOS.openSelectDialog({}, imageUri => {
-      this.setState({ imgTest: imageUri });
-      this.setValue(imageUri, 'IMAGE')
-    }, error => console.error(error));
+      console.log(imageUri)
+      NativeModules.ReadImageData.readImage(imageUri, (image) => {
+        console.log(image)
+        const data_uri = 'data:image/jpg;base64,' + image
+        this.setState({ imgTest: data_uri });
+        this.setValue(data_uri, 'IMAGE')
+      })
+      // let photo = {
+      //     uri: imageUri,
+      //     type: 'image/jpeg',
+      //     name: 'photo.jpg'
+      // };
+
+      // this.setState({ imgTest: imageUri });
+      // this.setValue(imageUri, 'IMAGE')
+
+    },
+    error => {
+      // console.error(error)
+      console.log('there was an error')
+    });
   }
 
   takePicture = () => {
      this.camera.capture()
        .then((data) => {
-         // contains mediaUri and path, whats the difference? TODO
-         this.setState({ imgTest: data.mediaUri });
-         this.setValue(data.mediaUri, 'IMAGE');
-         this.convertImageToBase64(data.mediaUri);
+         console.log(data.mediaUri)
+         NativeModules.ReadImageData.readImage(data.mediaUri, (image) => {
+           console.log(image)
+           const data_uri = 'data:image/jpg;base64,' + image
+           this.setState({ imgTest: data_uri });
+           this.setValue(data_uri, 'IMAGE')
+         })
+         // this.setState({ imgTest: data.mediaUri });
+         // this.setValue(data.mediaUri, 'IMAGE');
        })
        .catch(err => console.error(err));
    }
 
-   saveSpreadsheet() {
-     var uri = null;
-
-     var photo = {
-        uri: uri,
-        type: 'image/jpeg',
-        name: 'photo' + this.state.row.toString() + '_' + this.state.col.toString() + '.jpg',
-      };
-
-      var body = new FormData();
-      body.append('authToken', 'secret');
-      body.append('photo', photo);
-      body.append('title', 'A beautiful photo!');
-
-      var xhr = new XMLHttpRequest();
-      // xhr.open('POST', serverURL);
-      // xhr.send(body);
-   }
-
-   submitSpreadsheet() {
-     this.saveSpreadsheet()
-     // emailSpreadsheet()
+   reset() {
+     this.setState({
+       spreadsheet: [[{value: null, type: null}, {value: null, type: null}],
+                     [{value: null, type: null}, {value: null, type: null}]],
+       row: 0,
+       col: 0,
+       type: 'TEXT',
+     })
    }
 
   renderInputs() {
@@ -260,21 +270,23 @@ export default class CreateModelScreen extends React.Component {
     const {navigate} = this.props.navigation;
     const {height, width} = Dimensions.get('window');
     return (
-      <View style={[styles.flexCol, styles.fullScreen, {width: '100%', backgroundColor: 'pink'}]}>
+      <ScrollView style={[{width: '100%', backgroundColor: 'pink'}]}>
 
-        <View style={{flex: .4, width: '100%'}}>
+        <View style={{width: '100%'}}>
           {this.renderInputs()}
         </View>
 
-        <View style={{flex: .3, width: '100%'}}>
-          <ScrollView style={{padding: 15}}>
-          {
-            this.renderPreview()
-          }
+        <View style={{width: '100%'}}>
+          <ScrollView horizontal={true} style={{padding: 15}}>
+            <View>
+            {
+              this.renderPreview()
+            }
+            </View>
           </ScrollView>
         </View>
 
-        <View style={[styles.flexCol, {flex: .3, width: '100%', padding: 20}]}>
+        <View style={[styles.flexCol, {width: '100%', padding: 20}]}>
           <TouchableHighlight
             style={[styles.navButton]}
               onPress={() => {
@@ -316,16 +328,16 @@ export default class CreateModelScreen extends React.Component {
                   v
                 </Text>
             </TouchableHighlight>
-
           <TouchableHighlight
-            style={{backgroundColor: 'white', padding: 10}}
-            >
-              <Text style={{fontFamily: "Avenir-Medium", fontSize: 20, color: 'pink'}}>
-                E-Mail Spreadsheet
+            style={{backgroundColor: 'white', padding: 10, marginTop: 15, width: '100%'}}
+            onPress={() => navigate('Submit', {model: this.state.spreadsheet})}
+          >
+              <Text style={{fontFamily: "Avenir-Medium", fontSize: 20, color: 'pink', textAlign: 'center'}}>
+                Submit
               </Text>
           </TouchableHighlight>
         </View>
-      </View>
+      </ScrollView>
     );
   }
 }
