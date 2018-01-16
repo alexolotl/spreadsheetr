@@ -18,9 +18,14 @@ import styles from '../styles'
 import Camera from 'react-native-camera';
 
 export default class CreateModelScreen extends React.Component {
-  static navigationOptions = {
-    title: 'Enter your Data',
-  };
+  static navigationOptions = ({ navigation }) => {
+    const { params = {} } = navigation.state
+
+    return {
+      title: 'Create Your Sheet',
+      headerRight: <Button title='Reset' onPress={() => params.handleReset()} />
+    }
+  }
 
   constructor(props) {
     super(props)
@@ -31,6 +36,10 @@ export default class CreateModelScreen extends React.Component {
       col: 0,
       type: 'TEXT'
     }
+  }
+
+  componentDidMount() {
+    this.props.navigation.setParams({ handleReset: this.reset });
   }
 
   setValue = (value = null, type = null) => {
@@ -56,6 +65,18 @@ export default class CreateModelScreen extends React.Component {
       null
   }
 
+  newCol = () => {
+    let spreadsheetCopy = this.state.spreadsheet
+    let newEmptyCol = []
+    for (let i = 0; i < spreadsheetCopy.length; i++) {
+      spreadsheetCopy[i].push({value: null, type: null})
+    }
+    this.setState({
+      col: this.state.col + 1,
+      spreadsheet: spreadsheetCopy
+    })
+  }
+
   nextCol = () => {
     if (this.state.col < this.state.spreadsheet[0].length - 1) {
       this.setState({
@@ -64,16 +85,23 @@ export default class CreateModelScreen extends React.Component {
       this.setState({type: this.state.spreadsheet[this.state.row][this.state.col + 1].type || 'TEXT'})
       return;
     } else {
-      let spreadsheetCopy = this.state.spreadsheet
-      let newEmptyCol = []
-      for (let i = 0; i < spreadsheetCopy.length; i++) {
-        spreadsheetCopy[i].push({value: null, type: null})
-      }
-      this.setState({
-        col: this.state.col + 1,
-        spreadsheet: spreadsheetCopy
-      })
+      this.newCol()
+
     }
+  }
+
+  newRow = () => {
+    let spreadsheetCopy = this.state.spreadsheet
+    let newEmptyRow = []
+    for (let i = 0; i < this.state.spreadsheet[0].length; i++) {
+      newEmptyRow[i] = {value: null, type: null}
+    }
+    spreadsheetCopy.push(newEmptyRow)
+    this.setState({
+      row: this.state.row + 1,
+      col: 0,
+      spreadsheet: spreadsheetCopy
+    })
   }
 
   nextRow = () => {
@@ -84,17 +112,7 @@ export default class CreateModelScreen extends React.Component {
       this.setState({type: this.state.spreadsheet[this.state.row + 1][this.state.col].type || 'TEXT'})
       return;
     } else {
-      let spreadsheetCopy = this.state.spreadsheet
-      let newEmptyRow = []
-      for (let i = 0; i < this.state.spreadsheet[0].length; i++) {
-        newEmptyRow[i] = {value: null, type: null}
-      }
-      spreadsheetCopy.push(newEmptyRow)
-      this.setState({
-        row: this.state.row + 1,
-        col: 0,
-        spreadsheet: spreadsheetCopy
-      })
+      this.newRow()
     }
   }
 
@@ -102,7 +120,7 @@ export default class CreateModelScreen extends React.Component {
     return (
       this.state.spreadsheet.map((row, i) => {
         return(
-          <View key={i} style={[styles.flexRow]}>
+          <View key={i} style={[styles.flexRow, {marginRight: 30}]}>
 
             {
               row.map((col, j) => {
@@ -180,7 +198,7 @@ export default class CreateModelScreen extends React.Component {
        .catch(err => console.error(err));
    }
 
-   reset() {
+   reset = () => {
      this.setState({
        spreadsheet: [[{value: null, type: null}, {value: null, type: null}],
                      [{value: null, type: null}, {value: null, type: null}]],
@@ -271,17 +289,21 @@ export default class CreateModelScreen extends React.Component {
     const {height, width} = Dimensions.get('window');
     return (
       <ScrollView style={[{width: '100%', backgroundColor: 'pink'}]}>
-
         <View style={{width: '100%'}}>
           {this.renderInputs()}
         </View>
 
         <View style={{width: '100%'}}>
-          <ScrollView horizontal={true} style={{padding: 15}}>
-            <View>
-            {
-              this.renderPreview()
-            }
+          <ScrollView horizontal={true} style={{paddingHorizontal: 15}}>
+            <View style={{flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+              <View>
+                {
+                  this.renderPreview()
+                }
+              </View>
+              {
+                //<Text onPress={this.newCol} style={{fontSize: 30, margin: 10}}>+</Text>
+              }
             </View>
           </ScrollView>
         </View>
@@ -330,10 +352,10 @@ export default class CreateModelScreen extends React.Component {
             </TouchableHighlight>
           <TouchableHighlight
             style={{backgroundColor: 'white', padding: 10, marginTop: 15, width: '100%'}}
-            onPress={() => navigate('Submit', {model: this.state.spreadsheet})}
+            onPress={() => navigate('Submit', {model: this.state.spreadsheet, reset: this.reset})}
           >
               <Text style={{fontFamily: "Avenir-Medium", fontSize: 20, color: 'pink', textAlign: 'center'}}>
-                Submit
+                Next
               </Text>
           </TouchableHighlight>
         </View>

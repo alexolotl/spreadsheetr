@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, View, Dimensions, Text, TouchableHighlight, TextInput } from 'react-native';
+import { Image, View, Dimensions, TouchableOpacity, Text, Linking, TouchableHighlight, TextInput } from 'react-native';
 import styles from '../styles'
 
 export default class Submit extends React.Component {
@@ -10,7 +10,10 @@ export default class Submit extends React.Component {
     super(props)
     this.state = {
       title: 'spreadsheet',
-      recipients: ['azisis219@gmail.com']
+      recipients: ['azisis219@gmail.com'],
+      submitted: false,
+      url: '',
+      isPrivate: true
     }
   }
 
@@ -18,7 +21,8 @@ export default class Submit extends React.Component {
     let body = JSON.stringify({
       data: this.props.navigation.state.params.model,
       title: this.state.title,
-      recipients: this.state.recipients
+      recipients: this.state.recipients,
+      private: this.state.isPrivate
     })
 
     fetch('http://local.paom.com:8000/api/spreadsheets/', {
@@ -29,11 +33,14 @@ export default class Submit extends React.Component {
        },
        body: JSON.stringify(body)
      }).then(response => {
-       console.log(response.json())
+       if (response.status == 200) {
+         this.setState({submitted: true})
+       }
        return response.json();
      })
      .then(data => {
          console.log(data)
+         this.setState({url: data.url})
          return data;
      })
      .catch(error => {
@@ -42,11 +49,31 @@ export default class Submit extends React.Component {
      });
   }
 
-  render() {
+  renderSuccess = () => {
+    const {navigate} = this.props.navigation;
+
+    return (
+      <View>
+        <Text style={[styles.h1, {marginBottom: 15}]}>Your spreadsheet has been sent!</Text>
+        <Text onPress={() => Linking.openURL(this.state.url)} style={[styles.h1, {marginBottom: 15}]}>{this.state.url}</Text>
+        <TouchableHighlight
+          style={{backgroundColor: 'white', padding: 10}}
+          onPress={() => {this.props.navigation.state.params.reset(); navigate('Home')}}
+          >
+            <Text style={{textAlign: 'center', fontFamily: "Avenir-Medium", fontSize: 20, color: 'pink'}}>
+              New Spreadsheet
+            </Text>
+        </TouchableHighlight>
+      </View>
+    )
+  }
+
+  renderSubmit = () => {
     const {width, height} = Dimensions.get('window');
     const {navigate} = this.props.navigation;
+
     return (
-      <View style={[styles.fullScreen, {padding: 15, backgroundColor: 'pink'}]}>
+      <View>
         <View style={{padding: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
           <Text style={[{flex: .25}, styles.h1]}>Title:</Text>
           <TextInput
@@ -63,6 +90,22 @@ export default class Submit extends React.Component {
             value={this.state.recipients[0]}
           />
         </View>
+        <View style={[styles.flexRow, {justifyContent: 'center'}]}>
+          <Text style={{textAlign: 'center', fontFamily: "Avenir-Medium", fontSize: 20, color: 'white'}}>
+            Private:
+          </Text>
+          <TouchableOpacity
+            onPress={() => {this.setState({isPrivate: true})}}
+            style={{backgroundColor: this.state.isPrivate ? 'white' : 'pink', margin: 15, width: 24, height: 24, borderColor: 'black', borderWidth: 2, borderRadius: 12}}
+          />
+          <Text style={{textAlign: 'center', fontFamily: "Avenir-Medium", fontSize: 20, color: 'white'}}>
+            Public:
+          </Text>
+          <TouchableOpacity
+            onPress={() => {this.setState({isPrivate: false})}}
+            style={{backgroundColor: this.state.isPrivate ? 'pink' : 'white', margin: 15, width: 24, height: 24, borderColor: 'black', borderWidth: 2, borderRadius: 12}}
+          />
+        </View>
         <TouchableHighlight
           style={{backgroundColor: 'white', padding: 10}}
           onPress={this.submitSpreadsheet}
@@ -71,6 +114,15 @@ export default class Submit extends React.Component {
               SUBMIT
             </Text>
         </TouchableHighlight>
+      </View>
+    )
+
+  }
+
+  render() {
+    return (
+      <View style={[styles.fullScreen, {padding: 15, backgroundColor: 'pink'}]}>
+        {this.state.submitted ? this.renderSuccess() : this.renderSubmit()}
       </View>
     );
   }
